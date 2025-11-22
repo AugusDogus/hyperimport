@@ -44,6 +44,28 @@ and, more...
 
 
 
+## Platform Support
+
+hyperimport works on **Linux, macOS, and Windows**.
+
+### Windows Requirements
+
+On Windows, you need to install [LLVM](https://llvm.org/) to use hyperimport:
+
+```bash
+# Using scoop (recommended)
+scoop install llvm
+
+# Or using chocolatey
+choco install llvm
+
+# Or download from https://releases.llvm.org/
+```
+
+The `llvm-nm` tool is used to extract symbols from compiled libraries on Windows.
+
+
+
 ## Documentation
 
 *—"I wanna learn more about this! How do I get started?"*

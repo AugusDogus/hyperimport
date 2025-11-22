@@ -22,5 +22,6 @@ export function lastModified(path: string) {
  * @param path The path to the library to be loaded.
  */
 export function nm(path: string) {
-  return [...Bun.spawnSync(["nm", path]).stdout.toString().matchAll(/T (.*)$/gm)].map(x => x[1][0] === "_" ? x[1].slice(1) : x[1]);
+  const nmCommand = process.platform === "win32" ? "llvm-nm" : "nm";
+  return [...Bun.spawnSync([nmCommand, path]).stdout.toString().matchAll(/T (.*)$/gm)].map(x => x[1][0] === "_" ? x[1].slice(1) : x[1]);
 }

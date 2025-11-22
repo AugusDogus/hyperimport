@@ -7,14 +7,17 @@ export default class extends Loader {
         super("Zig Loader",
             {
                 extension: "zig",
-                buildCommand: (importPath, outDir) => [
-                    "zig",
-                    "build-lib",
-                    importPath,
-                    "-dynamic",
-                    "-OReleaseFast",
-                    `-femit-bin=${outDir}/lib${parse(importPath).name}.${suffix}`
-                ],
+                buildCommand: (importPath, outDir) => {
+                    const libPrefix = process.platform === "win32" ? "" : "lib";
+                    return [
+                        "zig",
+                        "build-lib",
+                        importPath,
+                        "-dynamic",
+                        "-OReleaseFast",
+                        `-femit-bin=${outDir}/${libPrefix}${parse(importPath).name}.${suffix}`
+                    ];
+                },
                 outDir: importPath => `build/${basename(importPath)}`
             }
         );

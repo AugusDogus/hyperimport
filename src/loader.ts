@@ -102,7 +102,8 @@ export default class {
     async preload() {
         this.config.outDir = this._config.outDir!(this.config.importPath);
         this.config.buildCommand = this._config.buildCommand!(this.config.importPath, this.config.outDir);
-        this.config.libPath = `${this.config.outDir}/lib${parse(this.config.importPath).name}.${suffix}`;
+        const libPrefix = process.platform === "win32" ? "" : "lib";
+        this.config.libPath = `${this.config.outDir}/${libPrefix}${parse(this.config.importPath).name}.${suffix}`;
     }
 
     /**

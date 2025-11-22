@@ -7,7 +7,7 @@ export default class extends Loader {
     constructor() {
         super("Library Loader",
             {
-                extension: "so|dylib",
+                extension: "so|dylib|dll",
             }
         );
     }
