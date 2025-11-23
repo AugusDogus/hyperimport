@@ -54,18 +54,25 @@ export default class {
         Bun.write(`${configDir}/lastModified`, lastModified(this.config.importPath));
         
         const configWriter = Bun.file(`${configDir}/config.ts`).writer();
-        configWriter.write(`import { LoaderConfig, T } from "hyperimport";\nexport default {\n\tbuildCommand: ${JSON.stringify(this.config.buildCommand)},\n\toutDir: "${this.config.outDir}",\n\tsymbols: {`);
+        configWriter.write(`import type { LoaderConfig } from "hyperimport";\nimport { T } from "hyperimport";\nexport default {\n\tbuildCommand: ${JSON.stringify(this.config.buildCommand)},\n\toutDir: "${this.config.outDir}",\n\tsymbols: {`);
         
         const types = this._config.parseTypes ? await this._config.parseTypes(this.config.importPath) : undefined;
         
         if (types && Object.keys(types).length > 0) {
             for (const [symbol, type] of Object.entries(types)) {
                 const args = type.args.join(", ");
+                if (type.line) {
+                    // Convert Windows backslashes to forward slashes for proper file:// URL
+                    const filePath = this.config.importPath.replace(/\\/g, '/');
+                    configWriter.write(`\n\t\t/** Source: {@link file:///${filePath}#L${type.line}} */`);
+                }
                 configWriter.write(`\n\t\t${symbol}: {\n\t\t\targs: [${args}],\n\t\t\treturns: ${type.returns}\n\t\t},`);
             }
         }
         configWriter.write(`\n\t}\n} satisfies LoaderConfig.Main;`);
         await configWriter.end();
+        
+        // Generate types.d.ts - simplified since JSDoc is in config.ts
         await Bun.write(
             `${this.cwd}/@types/${filename}/types.d.ts`,
             `declare module "*/${filename}" {\n\tconst symbols: import("bun:ffi").ConvertFns<typeof import("./config.ts").default.symbols>;\n\texport = symbols;\n}`

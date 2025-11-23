@@ -21,7 +21,7 @@ export namespace LoaderConfig {
         extension: string,
         buildCommand?: (importPath: string, outDir: string) => string[],
         outDir?: (importPath: string) => string,
-        parseTypes?: (importPath: string) => Promise<Record<string, { args: string[], returns: string }> | undefined>,
+        parseTypes?: (importPath: string) => Promise<Record<string, { args: string[], returns: string, line?: number }> | undefined>,
     }
 
     export interface Internal {

@@ -55,6 +55,7 @@ async function getParser(): Promise<Parser> {
 export interface FunctionType {
     args: string[];
     returns: string;
+    line?: number;
 }
 
 // Parse Rust source code to extract FFI function signatures
@@ -156,7 +157,11 @@ export async function parseRustTypes(
             }
         }
 
-        types[fnName] = { args, returns: returnType };
+        types[fnName] = { 
+            args, 
+            returns: returnType,
+            line: fnNameNode.startPosition.row + 1
+        };
     }
 
     return types;

@@ -57,6 +57,7 @@ async function getParser(): Promise<Parser> {
 export interface FunctionType {
     args: string[];
     returns: string;
+    line?: number;
 }
 
 // Parse Zig source code to extract FFI function signatures
@@ -161,9 +162,12 @@ export async function parseZigTypes(
             }
         }
 
-        types[fnName] = { args, returns: returnType };
+        types[fnName] = { 
+            args, 
+            returns: returnType,
+            line: fnNameNode.startPosition.row + 1
+        };
     }
 
     return types;
 }
-
