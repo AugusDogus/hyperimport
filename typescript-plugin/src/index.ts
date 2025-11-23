@@ -6,14 +6,10 @@ export = function init({ typescript: ts }: { typescript: typeof import('typescri
         const logger = info.project.projectService.logger;
         logger.info('[Hyperimport Plugin] Initializing...');
 
-        // Decorate the language service by wrapping specific methods
-        logger.info(`[Hyperimport Plugin] Wrapping getDefinitionAtPosition`);
-        
-        const originalGetDefinition = info.languageService.getDefinitionAtPosition.bind(info.languageService);
-        
-        info.languageService.getDefinitionAtPosition = (fileName: string, position: number) => {
+        // Wrap getDefinitionAtPosition
+        const getDefinitionAtPosition = (fileName: string, position: number) => {
+            const prior = info.languageService.getDefinitionAtPosition(fileName, position);
             logger.info(`[Hyperimport Plugin] getDefinitionAtPosition called for ${fileName}:${position}`);
-            const prior = originalGetDefinition(fileName, position);
             logger.info(`[Hyperimport Plugin] Prior definitions: ${prior?.length || 0}`);
             
             try {
@@ -79,7 +75,12 @@ export = function init({ typescript: ts }: { typescript: typeof import('typescri
         };
 
         logger.info('[Hyperimport Plugin] Initialized successfully');
-        return info.languageService;
+        
+        // Return a new object that spreads the original language service and overrides specific methods
+        return {
+            ...info.languageService,
+            getDefinitionAtPosition
+        };
     }
 
     return { create };
