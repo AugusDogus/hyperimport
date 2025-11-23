@@ -92,7 +92,9 @@ module.exports = function init({ typescript: ts }) {
         }
         // Override getDefinitionAtPosition
         proxy.getDefinitionAtPosition = (fileName, position) => {
+            logger.info(`[Hyperimport Plugin] getDefinitionAtPosition called for ${fileName}:${position}`);
             const prior = info.languageService.getDefinitionAtPosition(fileName, position);
+            logger.info(`[Hyperimport Plugin] Prior definitions: ${prior?.length || 0}`);
             try {
                 const program = info.languageService.getProgram();
                 if (!program)
