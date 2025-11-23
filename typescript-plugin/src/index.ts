@@ -6,8 +6,16 @@ export = function init({ typescript: ts }: { typescript: typeof import('typescri
         const logger = info.project.projectService.logger;
         logger.info('[Hyperimport Plugin] Initializing...');
 
-        // Wrap getDefinitionAtPosition
-        const getDefinitionAtPosition = (fileName: string, position: number) => {
+        // Create proxy
+        const proxy: any = Object.create(null);
+        for (let k of Object.keys(info.languageService) as Array<keyof typeof info.languageService>) {
+            const x = info.languageService[k]!;
+            // @ts-expect-error
+            proxy[k] = (...args: Array<{}>) => x.apply(info.languageService, args);
+        }
+
+        // Override getDefinitionAtPosition
+        proxy.getDefinitionAtPosition = (fileName: string, position: number) => {
             const prior = info.languageService.getDefinitionAtPosition(fileName, position);
             logger.info(`[Hyperimport Plugin] getDefinitionAtPosition called for ${fileName}:${position}`);
             logger.info(`[Hyperimport Plugin] Prior definitions: ${prior?.length || 0}`);
@@ -75,12 +83,7 @@ export = function init({ typescript: ts }: { typescript: typeof import('typescri
         };
 
         logger.info('[Hyperimport Plugin] Initialized successfully');
-        
-        // Return a new object that spreads the original language service and overrides specific methods
-        return {
-            ...info.languageService,
-            getDefinitionAtPosition
-        };
+        return proxy;
     }
 
     return { create };
