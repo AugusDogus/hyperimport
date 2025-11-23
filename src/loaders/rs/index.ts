@@ -1,7 +1,8 @@
 import { basename } from "path";
-import Loader from "../loader";
+import Loader from "../../loader";
+import { parseRustTypes } from "./parse-types";
 
-export default class extends Loader {
+export default class RustLoader extends Loader {
     constructor() {
         super("Rust Loader",
             {
@@ -14,7 +15,11 @@ export default class extends Loader {
                     "--out-dir",
                     outDir
                 ],
-                outDir: importPath => `build/${basename(importPath)}`
+                outDir: importPath => `build/${basename(importPath)}`,
+                parseTypes: async (importPath) => {
+                    const sourceCode = await Bun.file(importPath).text();
+                    return parseRustTypes(sourceCode);
+                }
             }
         );
     }

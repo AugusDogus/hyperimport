@@ -1,0 +1,7 @@
+[hyperimport]
+loaders = ["rs", "zig"]
+
+[test]
+preload = ["./preload.ts"]
+root = "./test"
+

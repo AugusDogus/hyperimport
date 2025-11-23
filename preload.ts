@@ -9,7 +9,9 @@ if (Bun.env.DISABLE_PRELOAD !== "1") {
     debugLog(config.debug, 3, "registering loaders...");
 
     for (const loader of config.loaders ?? []) {
+        // Try both .ts file and directory with index.ts
         await importPlugin(`./src/loaders/${loader}.ts`)
+            .catch(() => importPlugin(`./src/loaders/${loader}/index.ts`))
             .then(name => debugLog(config.debug, 2, name, "has been registered"))
             .catch(() => debugLog(config.debug, 1, "loader not found:", loader));
     }
@@ -35,7 +37,7 @@ if (Bun.env.DISABLE_PRELOAD !== "1") {
 
     async function importPlugin(path: string) {
         const l = await import(path);
-        const plugin = await new l.default(config.debug, cwd).toPlugin();
+        const plugin = await new l.default().toPlugin();
         Bun.plugin(plugin);
         return plugin.name;
     }

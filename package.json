@@ -3,6 +3,9 @@
   "version": "0.2.0",
   "description": "⚡ Import c, rust, zig etc. files in your TypeScript code and more.",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "files": [
     "preload.ts",
     "src"
@@ -27,6 +30,9 @@
   },
   "homepage": "https://github.com/tr1ckydev/hyperimport#readme",
   "bin": "./src/cli.ts",
+  "dependencies": {
+    "web-tree-sitter": "0.25.10"
+  },
   "devDependencies": {
     "bun-types": "latest"
   }

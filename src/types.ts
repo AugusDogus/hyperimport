@@ -1,4 +1,4 @@
-import { FFIFunction, Narrow } from "bun:ffi";
+import { FFIFunction } from "bun:ffi";
 
 export { FFIType as T } from "bun:ffi";
 
@@ -14,13 +14,14 @@ export namespace LoaderConfig {
     export interface Main {
         buildCommand?: string[],
         outDir?: string,
-        symbols: Record<string, Narrow<FFIFunction>>,
+        symbols: Record<string, FFIFunction>,
     }
 
     export interface Builder {
         extension: string,
         buildCommand?: (importPath: string, outDir: string) => string[],
         outDir?: (importPath: string) => string,
+        parseTypes?: (importPath: string) => Promise<Record<string, { args: string[], returns: string }> | undefined>,
     }
 
     export interface Internal {
@@ -28,7 +29,7 @@ export namespace LoaderConfig {
         libPath: string,
         buildCommand: string[],
         outDir: string,
-        symbols: Record<string, Narrow<FFIFunction>>,
+        symbols: Record<string, FFIFunction>,
     }
 
 }

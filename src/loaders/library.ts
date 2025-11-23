@@ -3,7 +3,7 @@ import { basename } from "path";
 import Loader from "../loader";
 import { lastModified, nm } from "../utils";
 
-export default class extends Loader {
+export default class LibraryLoader extends Loader {
     constructor() {
         super("Library Loader",
             {

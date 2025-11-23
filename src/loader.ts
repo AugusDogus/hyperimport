@@ -1,9 +1,9 @@
 import { BunPlugin } from "bun";
-import { FFIFunction, Narrow, dlopen, suffix } from "bun:ffi";
+import { FFIFunction, dlopen, suffix } from "bun:ffi";
 import { mkdirSync, readFileSync } from "fs";
 import { basename, parse } from "path";
 import { LoaderConfig } from "./types";
-import { lastModified, nm } from "./utils";
+import { lastModified } from "./utils";
 
 export default class {
     /**The name of the loader. */
@@ -31,6 +31,13 @@ export default class {
      * By default asks for the build command and output directory from the user on importing the source file for the first time.
      */
     async initConfigPre() {
+        // In test mode, automatically use defaults without prompting
+        if (process.env.NODE_ENV === "test") {
+            console.log(`\x1b[33m[HYPERIMPORT]\x1b[39m: ${this.name}\nNo configuration was found for "${this.config.importPath}"\nUsing default configuration (test mode)...\n`);
+            mkdirSync(this.config.outDir, { recursive: true });
+            return;
+        }
+
         console.log(`\x1b[33m[HYPERIMPORT]\x1b[39m: ${this.name}\nNo configuration was found for "${this.config.importPath}"\nEnter the build command and output directory to configure it.\nPress enter to use the default values.\n`);
         this.config.buildCommand = prompt("build command: (default)")?.split(" ") ?? this.config.buildCommand;
         this.config.outDir = prompt(`output directory: (${this.config.outDir})`) ?? this.config.outDir;
@@ -42,20 +49,28 @@ export default class {
      */
     async initConfigTypes() {
         const filename = basename(this.config.importPath);
-        mkdirSync(`${this.cwd}/@types/${filename}`, { recursive: true });
-        Bun.write(`${this.cwd}/@types/${filename}/lastModified`, lastModified(this.config.importPath));
-        const configWriter = Bun.file(`${this.cwd}/@types/${filename}/config.ts`).writer();
+        const configDir = `${this.cwd}/@types/${filename}`;
+        mkdirSync(configDir, { recursive: true });
+        Bun.write(`${configDir}/lastModified`, lastModified(this.config.importPath));
+        
+        const configWriter = Bun.file(`${configDir}/config.ts`).writer();
         configWriter.write(`import { LoaderConfig, T } from "hyperimport";\nexport default {\n\tbuildCommand: ${JSON.stringify(this.config.buildCommand)},\n\toutDir: "${this.config.outDir}",\n\tsymbols: {`);
-        for (const symbol of nm(this.config.libPath)) {
-            configWriter.write(`\n\t\t${symbol}: {\n\t\t\targs: [],\n\t\t\treturns: T.void\n\t\t},`);
+        
+        const types = this._config.parseTypes ? await this._config.parseTypes(this.config.importPath) : undefined;
+        
+        if (types && Object.keys(types).length > 0) {
+            for (const [symbol, type] of Object.entries(types)) {
+                const args = type.args.join(", ");
+                configWriter.write(`\n\t\t${symbol}: {\n\t\t\targs: [${args}],\n\t\t\treturns: ${type.returns}\n\t\t},`);
+            }
         }
         configWriter.write(`\n\t}\n} satisfies LoaderConfig.Main;`);
-        configWriter.end();
-        Bun.write(
+        await configWriter.end();
+        await Bun.write(
             `${this.cwd}/@types/${filename}/types.d.ts`,
             `declare module "*/${filename}" {\n\tconst symbols: import("bun:ffi").ConvertFns<typeof import("./config.ts").default.symbols>;\n\texport = symbols;\n}`
         );
-        console.log(`\n\x1b[32mConfig file has been generated at "${this.cwd}/@types/${filename}/config.ts"\x1b[39m\nEdit the config.ts and set the argument and return types, then rerun the script.`);
+        console.log(`\n\x1b[32mConfig file has been generated at "${this.cwd}/@types/${filename}/config.ts"\x1b[39m\nTypes have been automatically generated!`);
     }
 
     /**
@@ -77,22 +92,24 @@ export default class {
         const lmfile = `${this.cwd}/@types/${basename(this.config.importPath)}/lastModified`;
         if (lm !== readFileSync(lmfile).toString()) {
             await this.build();
+            await this.initConfigTypes();
             Bun.write(lmfile, lm);
         }
     }
 
     /**
      * Imports the symbols defined in `config.ts` to be used when opening the shared library.
-     * If `config.ts` isn't found, the source file isn't configured yet, hence executes `initConfig()` and exits the process.
+     * If `config.ts` doesn't exist, generates it automatically with type inference.
      * @returns An object containing the symbols.
      */
-    async getSymbols(): Promise<Record<string, Narrow<FFIFunction>>> {
+    async getSymbols(): Promise<Record<string, FFIFunction>> {
         try {
             await this.ifSourceModify();
             return (await import(`${this.cwd}/@types/${basename(this.config.importPath)}/config.ts`)).default.symbols;
         } catch {
             await this.initConfig();
-            process.exit();
+            // Config generated, now import and return it
+            return (await import(`${this.cwd}/@types/${basename(this.config.importPath)}/config.ts`)).default.symbols;
         }
     }
 
