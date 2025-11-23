@@ -1,0 +1,30 @@
+{
+  "name": "hyperimport-goto-source",
+  "displayName": "Hyperimport - Go to Rust/Zig Source",
+  "description": "Navigate directly to Rust/Zig source files from hyperimport FFI definitions",
+  "version": "0.1.0",
+  "publisher": "tr1ckydev",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:javascript"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {},
+  "scripts": {
+    "vscode:prepublish": "bun run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  }
+}
+

@@ -4,17 +4,15 @@
   "description": "⚡ Import c, rust, zig etc. files in your TypeScript code and more.",
   "main": "src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./typescript-plugin": "./typescript-plugin/dist/index.js"
+    ".": "./src/index.ts"
   },
   "files": [
     "preload.ts",
     "src",
-    "typescript-plugin/dist"
+    "vscode-extension"
   ],
   "scripts": {
-    "build": "cd typescript-plugin && bun run build",
-    "prepublishOnly": "bun run build"
+    "build:extension": "cd vscode-extension && npm run compile"
   },
   "repository": {
     "type": "git",
