@@ -83,13 +83,10 @@ module.exports = function init({ typescript: ts }) {
     function create(info) {
         const logger = info.project.projectService.logger;
         logger.info('[Hyperimport Plugin] Initializing...');
-        // Proxy the language service
-        const proxy = Object.create(null);
-        for (const k of Object.keys(info.languageService)) {
-            const x = info.languageService[k];
-            // @ts-ignore
-            proxy[k] = (...args) => x.apply(info.languageService, args);
-        }
+        // Proxy the language service - use the original as prototype
+        const proxy = Object.create(info.languageService);
+        // We only override specific methods, everything else delegates to the original
+        logger.info(`[Hyperimport Plugin] Creating proxy for language service`);
         // Override getDefinitionAtPosition
         proxy.getDefinitionAtPosition = (fileName, position) => {
             logger.info(`[Hyperimport Plugin] getDefinitionAtPosition called for ${fileName}:${position}`);

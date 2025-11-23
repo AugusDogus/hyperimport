@@ -6,13 +6,11 @@ export = function init({ typescript: ts }: { typescript: typeof import('typescri
         const logger = info.project.projectService.logger;
         logger.info('[Hyperimport Plugin] Initializing...');
 
-        // Proxy the language service
-        const proxy = Object.create(null);
-        for (const k of Object.keys(info.languageService) as Array<keyof typeof info.languageService>) {
-            const x = info.languageService[k];
-            // @ts-ignore
-            proxy[k] = (...args: Array<{}>) => x!.apply(info.languageService, args);
-        }
+        // Proxy the language service - use the original as prototype
+        const proxy = Object.create(info.languageService);
+        
+        // We only override specific methods, everything else delegates to the original
+        logger.info(`[Hyperimport Plugin] Creating proxy for language service`);
 
         // Override getDefinitionAtPosition
         proxy.getDefinitionAtPosition = (fileName: string, position: number) => {
