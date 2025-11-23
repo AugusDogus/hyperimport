@@ -4,6 +4,10 @@
   "description": "Navigate directly to Rust/Zig source files from hyperimport FFI definitions",
   "version": "0.1.0",
   "publisher": "tr1ckydev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tr1ckydev/hyperimport.git"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -21,10 +25,12 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./"
   },
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.80.0",
-    "typescript": "^5.0.0"
+    "@vscode/vsce": "^3.7.0"
   }
 }
-
