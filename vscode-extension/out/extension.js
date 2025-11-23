@@ -37,13 +37,9 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
-const ts = __importStar(require("typescript"));
 const vscode = __importStar(require("vscode"));
 function activate(context) {
     console.log('[Hyperimport] Extension activated');
-    vscode.window.showInformationMessage('Hyperimport extension is now active!');
-    // Set the editor config to skip peek window
-    vscode.workspace.getConfiguration().update('editor.gotoLocation.multipleDefinitions', 'goto', vscode.ConfigurationTarget.Global);
     const provider = new HyperimportDefinitionProvider();
     context.subscriptions.push(vscode.languages.registerDefinitionProvider(['typescript', 'javascript'], provider));
 }
@@ -60,8 +56,8 @@ class HyperimportDefinitionProvider {
             return undefined;
         }
         const word = document.getText(wordRange);
-        console.log(`[Hyperimport] Checking definition for: ${word} at position ${position.line}:${position.character}`);
-        // Check if this symbol is imported from a .rs or .zig file
+        console.log(`[Hyperimport] Checking definition for: ${word}`);
+        // Check if this is an import from a .rs or .zig file
         const importMatch = this.findHyperimportImport(document, word);
         if (!importMatch) {
             console.log(`[Hyperimport] Not a hyperimport symbol`);
@@ -87,42 +83,42 @@ class HyperimportDefinitionProvider {
         const lineNumber = parseInt(match[2], 10) - 1; // Convert to 0-based
         console.log(`[Hyperimport] Redirecting to ${sourceFile}:${lineNumber + 1}`);
         const sourceUri = vscode.Uri.file(sourceFile);
+        // Try to find the exact position and range of the function name in the source file
+        try {
+            const sourceContent = fs.readFileSync(sourceFile, 'utf-8');
+            const lines = sourceContent.split('\n');
+            const line = lines[lineNumber];
+            if (line) {
+                // Find the function name in the line
+                // Look for the word we're searching for after "fn" or "function"
+                const fnNameIndex = line.indexOf(word);
+                if (fnNameIndex !== -1) {
+                    // Verify it's actually a function name (comes after "fn" or "function")
+                    const beforeWord = line.substring(0, fnNameIndex);
+                    if (/\b(fn|function)\s+$/.test(beforeWord)) {
+                        // Return a range that highlights the function name
+                        return new vscode.Location(sourceUri, new vscode.Range(new vscode.Position(lineNumber, fnNameIndex), new vscode.Position(lineNumber, fnNameIndex + word.length)));
+                    }
+                }
+            }
+        }
+        catch (err) {
+            console.log(`[Hyperimport] Could not read source file for precise positioning: ${err}`);
+        }
+        // Fallback to line start if we couldn't find the exact position
         return new vscode.Location(sourceUri, new vscode.Position(lineNumber, 0));
     }
     findHyperimportImport(document, symbol) {
         const text = document.getText();
-        // Parse the document as TypeScript/JavaScript using TypeScript's AST
-        const sourceFile = ts.createSourceFile(document.fileName, text, ts.ScriptTarget.Latest, true);
-        // Walk through all import declarations
-        for (const statement of sourceFile.statements) {
-            if (!ts.isImportDeclaration(statement)) {
-                continue;
-            }
-            // Get the module specifier (e.g., "./math.rs")
-            const moduleSpecifier = statement.moduleSpecifier;
-            if (!ts.isStringLiteral(moduleSpecifier)) {
-                continue;
-            }
-            const modulePath = moduleSpecifier.text;
-            // Only handle .rs and .zig files
-            if (!modulePath.endsWith('.rs') && !modulePath.endsWith('.zig')) {
-                continue;
-            }
-            // Check if the import has named bindings (e.g., { add, mul, sub })
-            const importClause = statement.importClause;
-            if (!importClause || !importClause.namedBindings) {
-                continue;
-            }
-            // Handle named imports
-            if (ts.isNamedImports(importClause.namedBindings)) {
-                for (const element of importClause.namedBindings.elements) {
-                    const importedName = element.name.text;
-                    // Check if this is the symbol we're looking for
-                    if (importedName === symbol) {
-                        console.log(`[Hyperimport] Found ${symbol} imported from ${modulePath}`);
-                        return { modulePath };
-                    }
-                }
+        // Look for imports from .rs or .zig files
+        const importRegex = /import\s+(?:{[^}]*}|[\w\s,]+)\s+from\s+['"](.*?\.(?:rs|zig))['"]/g;
+        let match;
+        while ((match = importRegex.exec(text)) !== null) {
+            const modulePath = match[1];
+            const importStatement = match[0];
+            // Check if our symbol is in this import
+            if (importStatement.includes(symbol)) {
+                return { modulePath };
             }
         }
         return undefined;
