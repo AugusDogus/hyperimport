@@ -7,5 +7,4 @@ bun.lock
 build/
 
 # TypeScript plugin
-typescript-plugin/dist/
 typescript-plugin/node_modules/
