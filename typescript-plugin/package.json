@@ -1,0 +1,28 @@
+{
+  "name": "typescript-plugin-hyperimport",
+  "version": "0.1.0",
+  "description": "TypeScript language service plugin for hyperimport - enables Go to Definition for Rust/Zig sources",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "typescript",
+    "plugin",
+    "language-service",
+    "hyperimport",
+    "rust",
+    "zig",
+    "ffi"
+  ],
+  "peerDependencies": {
+    "typescript": ">=4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
+
